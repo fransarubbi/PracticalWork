@@ -2,11 +2,16 @@
 #include <stdlib.h>
 #include "lista_team.h"
 
-typedef struct{   //struct auxiliar para guardar jugadores de una seleccion
-    char name[MAX];
-    int position;  //1=Arq 2=PC 3=LI 4=LD 5=MC 6=SC 7=MI 8=MD 9=DC 10=MP 11=SD
-    int number_shirt;
+typedef struct{         //struct auxiliar para guardar jugadores de una seleccion  
+   char name[MAX];
+   int position;  //1=Arq 2=PC 3=LI 4=LD 5=MC 6=SC 7=MI 8=MD 9=DC 10=MP 11=SD
+   int number_shirt;
 } players;
+
+typedef struct{
+   char country[MAX];
+   players p[11];
+} players_of_team;
 
 
 //Funciones del menu
@@ -18,6 +23,8 @@ void show_for_country(listateam ); //busca un equipo por pais (usa search_for_co
 void show_all_insame_phase(listateam );  //mostrar todos los de misma fase
 void show_team_inorder_points_recursion(listateam , int );  //funcion recursiva que muestra los equipos ordenados por puntaje
 void delete_team_for_country(listateam *, char []);  //borra de la lista segun el pais y almacena sus datos en un archivo
+void load_players(players_of_team [], int *);
+void show_dt_players(listateam , players_of_team [], char [], int );
 
 //Funciones internas
 void load_team(team *); //carga los equipos para luego meterlos en load_list
@@ -31,8 +38,9 @@ int main(){
 
  listateam list;
  team t;
+ players_of_team pt[32];
  char c[MAX];
- int opcion, cant = 0, aux = 0, j;
+ int opcion, cant = 0, aux = 0, j, cantidad = 0;
 
  init_lista_team(&list);
 
@@ -60,11 +68,12 @@ int main(){
    printf ("\n|        11. Mostrar goleadores                       |  12. Modificar asistidores                |");
    printf ("\n|        13. Mostrar actualizaciones paginadas        |  14. Cargar en archivo segun continente   |");
    printf ("\n|        15. Realizar una precarga                    |  16. Mostrar partidos perdidos de un pais |");
-   printf ("\n|        17. Mostrar dt y plantel                     |  18. Salir del programa                   |");
+   printf ("\n|        17. Cargar plantel                           |  18. Mostrar dt y plantel                 |");
+   printf ("\n|        19. Cargar goleadores                        |  20. Salir del programa                   |");
    printf ("\n| ------------------------------------------------------------------------------------------------|\n\n");
    scanf("%d", &opcion);
 
-   while(opcion > 18 || opcion < 1){
+   while(opcion > 20 || opcion < 1){
       printf("Por favor, ingrese un valor correcto segun la opcion que desea utilizar\n");
       scanf("%d", &opcion);
    }
@@ -129,9 +138,34 @@ int main(){
                cant += 1;
                break;
 
+      case 17: load_players(pt, &cantidad);
+               break;
+
+      case 18: do{
+                  printf("|-------------------------------------------------------|\n");
+                  printf("| Por favor ingrese un pais que dispute el Mundial 2022 |\n");
+                  printf("|-------------------------------------------------------|\n");
+                  printf("|      Qatar, Ecuador, Senegal, Paises bajos            |\n");
+                  printf("|      Inglaterra, Iran, Estados Unidos, Gales          |\n");
+                  printf("|      Argentina, Arabia Saudita, Mexico, Polonia       |\n");
+                  printf("|      Francia, Australia, Dinamarca, Tunez             |\n");
+                  printf("|      España, Costa Rica, Alemania, Japon              |\n");
+                  printf("|      Belgica, Canada, Marruecos, Croacia              |\n");
+                  printf("|      Brasil, Serbia, Suiza, Camerun                   |\n");
+                  printf("|      Portugal, Ghana, Uruguay, Corea del Sur          |\n");
+                  printf("|-------------------------------------------------------|\n");
+                  scanf(" %[^\n]", c);
+                  for (j = 0; c[j]!= '\0'; j++){
+                     c[j] = toupper(c[j]);
+                  }
+                  aux = control_country(c);
+               }while(aux != 0);
+               show_dt_players(list, pt, c, cantidad);
+               break;
+
       default: printf("Fin del sistema, que tenga buen dia!\n");
    }
- } while(opcion != 18);
+ } while(opcion != 20);
 
  return 0;
 }
@@ -816,6 +850,123 @@ void delete_team_for_country(listateam *list, char c[]){
          else{
             forward_lista(list);
          }
+      }
+   }
+}
+
+
+void load_players(players_of_team pt[], int *cantidad){
+
+   char country[MAX], name[MAX];
+   int aux, j, i, n, k, l;
+   int auxcant = *cantidad;
+
+   do{
+      printf("Cuantos planteles desea cargar?\n");
+      scanf("%d", &n);
+   }while(n > 32 - *cantidad || n < 1);
+
+   for(i = auxcant; i < n + auxcant; i++){
+      do{
+         printf("|-------------------------------------------------------|\n");
+         printf("| Por favor ingrese un pais que dispute el Mundial 2022 |\n");
+         printf("|-------------------------------------------------------|\n");
+         printf("|      Qatar, Ecuador, Senegal, Paises bajos            |\n");
+         printf("|      Inglaterra, Iran, Estados Unidos, Gales          |\n");
+         printf("|      Argentina, Arabia Saudita, Mexico, Polonia       |\n");
+         printf("|      Francia, Australia, Dinamarca, Tunez             |\n");
+         printf("|      España, Costa Rica, Alemania, Japon              |\n");
+         printf("|      Belgica, Canada, Marruecos, Croacia              |\n");
+         printf("|      Brasil, Serbia, Suiza, Camerun                   |\n");
+         printf("|      Portugal, Ghana, Uruguay, Corea del Sur          |\n");
+         printf("|-------------------------------------------------------|\n");
+         scanf(" %[^\n]", country);
+         for (j = 0; country[j]!= '\0'; j++){
+            country[j] = toupper(country[j]);
+         }
+         aux = control_country(country);
+      }while(aux != 0);
+      strcpy(pt[i].country, country);
+
+      for (k = 0; k < 11; k++){
+
+         printf("Ingrese el apellido del jugador\n");
+         scanf(" %[^\n]", name);
+         for (l = 0; name[l]!= '\0'; l++){
+            name[l] = toupper(name[l]);
+         }
+         strcpy(pt[i].p[k].name, name);
+
+         do{
+            printf("Ingrese el numero de su camiseta\n");
+            scanf("%d", &pt[i].p[k].number_shirt);
+         }while(pt[i].p[k].number_shirt < 1 || pt[i].p[k].number_shirt > 50);
+         do{
+            printf("Ingrese la posicion en la que juega\n");
+            printf("1: Arquero\n2: Primer central\n3: Lateral Izquierdo\n4: Lateral Derecho\n5: Mediocentro\n");
+            printf("6: Segundo central\n7: Carrilero izquierdo\n8: Carrilero derecho\n9: Delantero centro\n");
+            printf("10: Enganche\n11: Segundo delantero\n");
+            scanf("%d", &pt[i].p[k].position);
+         }while(pt[i].p[k].position < 1 || pt[i].p[k].position > 11);
+      }
+      *cantidad += 1;
+   }
+}
+
+
+void show_dt_players(listateam list, players_of_team pt[], char c[], int cantidad){
+
+   int i, aux = 0, j;
+   for (i = 0; i < cantidad; i++){
+      if(strcmp(pt[i].country, c) == 0){
+         aux += 1;
+      }
+   }
+   if(aux == 0){
+      printf("No ha cargado un plantel para la seleccion %s\n", c);
+   }
+   else{
+      reset_lista(&list);
+      while(!isOos_lista(list)){
+
+         for(i = 0; i < cantidad; i++){
+            if(strcmp(pt[i].country, mostrar_country(copy_lista(list))) == 0){
+
+               printf("El DT es %s\n", mostrar_dt(copy_lista(list)));
+               printf("El capitan es %s\n", mostrar_captain(copy_lista(list)));
+
+               for(j = 0; j < 11; j++){
+
+                  printf("Apellido: %s\t", pt[i].p[j].name);
+                  switch(pt[i].p[j].position){
+                     case 1: printf("Arquero\t");
+                             break;
+                     case 2: printf("Primer central\t");
+                             break;
+                     case 3: printf("Lateral izquierdo\t");
+                             break;
+                     case 4: printf("Lateral derecho\t");
+                             break;
+                     case 5: printf("Mediocentro\t");
+                             break;
+                     case 6: printf("Segundo central\t");
+                             break;
+                     case 7: printf("Carrilero izquierdo\t");
+                             break;
+                     case 8: printf("Carrilero derecho\t");
+                             break;
+                     case 9: printf("Delantero centro\t");
+                             break;
+                     case 10: printf("Enganche\t");
+                              break;
+                     case 11: printf("Segundo delantero\t");
+                              break;
+                  }
+                  printf("Dorsal %d\n", pt[i].p[j].number_shirt);
+               }
+            }
+         }
+         forward_lista(&list);
       }
    }
 }
