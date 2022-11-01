@@ -205,13 +205,7 @@ int mostrar_points(team t){
 }
 
 goalscorer mostrar_goalscorer(team t){
-    goalscorer auxiliar;
-    char *aux;
-    aux = (char*)malloc(sizeof(char)*strlen(t.player_goals.surname));
-    strcpy(aux, t.player_goals.surname);
-    strcpy(auxiliar.surname, aux);
-    auxiliar.goals = t.player_goals.goals;
-    return auxiliar;
+    return t.player_goals;
 }
 
 
@@ -220,11 +214,7 @@ int mostrar_etapa(team t){
 }
 
 date mostrar_fecha(team t){
-    date aux;
-    aux.day = t.d.day;
-    aux.month = t.d.month;
-    aux.year = t.d.year;
-    return aux;
+    return t.d;
 }
 
 int mostrar_jugados(team t){
