@@ -14,8 +14,12 @@ typedef struct{
 } players_of_team;
 
 
+typedef struct{
+   char name[MAX];
+} load_country;
+
 //Funciones del menu
-void load_list(listateam *, team *, int *); //carga n equipos en lista
+void load_list(listateam *, team *, int *, load_country [], int []); //carga n equipos en lista
 void show_all_list(listateam ); //muestra toda la lista
 void show_team(team );
 void preload(listateam *); //precargar pais,dt,capitan,grupo,inicializar puntaje en 0
@@ -25,13 +29,19 @@ void show_team_inorder_points_recursion(listateam , int );  //funcion recursiva 
 void delete_team_for_country(listateam *, char []);  //borra de la lista segun el pais y almacena sus datos en un archivo
 void load_players(players_of_team [], int *);
 void show_dt_players(listateam , players_of_team [], char [], int );
+void load_games(listateam *, team *);
+void show_games(listateam );
+void load_goalscorer(listateam *, team *);
+void show_best_goalscorer(listateam );
+
 
 //Funciones internas
-void load_team(team *); //carga los equipos para luego meterlos en load_list
+void load_team(team *, load_country [], int *); //carga los equipos para luego meterlos en load_list
 int control_country(char []);
 int control_group(char );
 void search_for_country(listateam , char []); //busca por pais
-
+void load_aux_country(load_country [], char [], int []);
+int function_control_country(load_country [], char [], int []);
 
 
 int main(){
@@ -39,8 +49,10 @@ int main(){
  listateam list;
  team t;
  players_of_team pt[32];
+ load_country lc[32];
  char c[MAX];
- int opcion, cant = 0, aux = 0, j, cantidad = 0;
+ int opcion, cant = 0, aux = 0, j, cantidad = 0, total[1];
+ total[0] = 0;
 
  init_lista_team(&list);
 
@@ -69,18 +81,19 @@ int main(){
    printf ("\n|        13. Mostrar actualizaciones paginadas        |  14. Cargar en archivo segun continente   |");
    printf ("\n|        15. Realizar una precarga                    |  16. Mostrar partidos perdidos de un pais |");
    printf ("\n|        17. Cargar plantel                           |  18. Mostrar dt y plantel                 |");
-   printf ("\n|        19. Cargar goleadores                        |  20. Salir del programa                   |");
+   printf ("\n|        19. Cargar goleadores                        |  20. Cargar partidos jugados              |");
+   printf ("\n|        21. Mostrar partidos perdidos                |  22. Salir del programa                   |");
    printf ("\n| ------------------------------------------------------------------------------------------------|\n\n");
    scanf("%d", &opcion);
 
-   while(opcion > 20 || opcion < 1){
+   while(opcion > 22 || opcion < 1){
       printf("Por favor, ingrese un valor correcto segun la opcion que desea utilizar\n");
       scanf("%d", &opcion);
    }
    
    switch(opcion){
 
-      case 1: load_list(&list, &t, &cant);
+      case 1: load_list(&list, &t, &cant, lc, total);
               break;
 
       case 2: if(cant == 0){
@@ -163,17 +176,43 @@ int main(){
                show_dt_players(list, pt, c, cantidad);
                break;
 
+      case 20: load_games(&list, &t);
+               break;
+
+      case 21: show_games(list);
+               break;
+
       default: printf("Fin del sistema, que tenga buen dia!\n");
    }
- } while(opcion != 20);
+ } while(opcion != 22);
 
  return 0;
 }
 
 
+void load_aux_country(load_country lc[], char c[], int total[]){
+   
+   int i;
+   int aux = total[0];
+   for(i = aux; i < aux + 1; i++){
+      strcpy(lc[i].name, c);
+      total[0] = total[0] + 1;
+   }
+}
 
 
-void load_list(listateam *list, team *t, int *cant){
+int function_control_country(load_country lc[], char c[], int total[]){
+   int i, aux = 0;
+   for(i = 0; i < total[0]; i++){
+      if(strcmp(lc[i].name, c) == 0){
+         aux = 1;
+      }
+   }
+   return aux;
+}
+
+
+void load_list(listateam *list, team *t, int *cant, load_country lc[], int total[]){
    
    int i = 0, n;
   
@@ -187,7 +226,7 @@ void load_list(listateam *list, team *t, int *cant){
       if(isFull_lista(list) == 0){
 
          printf("------------- Cargando Equipo -------------\n");
-         load_team(t);
+         load_team(t, lc, total);
          insert_lista_team(list, *t);
       }
       else{
@@ -545,9 +584,9 @@ int control_group(char g){
 }
 
 
-void load_team(team *t){
+void load_team(team *t, load_country lc[], int total[]){
 
-   int j, aux, f;
+   int j, aux, repeat, f;
    char c[MAX], g;
 
    do{
@@ -568,7 +607,12 @@ void load_team(team *t){
          c[j] = toupper(c[j]);
       }
       aux = control_country(c);
-   }while(aux != 0);
+      repeat = function_control_country(lc, c, total);
+      if(repeat == 1){
+         printf("\nEl pais %s ya esta cargado, no se puede repetir\n");
+      }
+   }while(aux != 0 || repeat == 1);
+   load_aux_country(lc, c, total);
    carga_country(t, c);
     
 
@@ -604,7 +648,7 @@ void load_team(team *t){
       case 1: do{
                   printf("Ingrese el puntaje actual de la selección\n");
                   scanf("%d", &aux);
-               }while(aux > 9 || aux < 1);
+               }while(aux > 9 || aux < 0);
                carga_points(t, aux);
                break;
       
@@ -937,19 +981,19 @@ void show_dt_players(listateam list, players_of_team pt[], char c[], int cantida
 
                for(j = 0; j < 11; j++){
 
-                  printf("Apellido: %s\t", pt[i].p[j].name);
+                  printf("Apellido: %15s\t", pt[i].p[j].name);
                   switch(pt[i].p[j].position){
-                     case 1: printf("Arquero\t");
+                     case 1: printf("Arquero\t\t\t");
                              break;
-                     case 2: printf("Primer central\t");
+                     case 2: printf("Primer central\t\t");
                              break;
                      case 3: printf("Lateral izquierdo\t");
                              break;
-                     case 4: printf("Lateral derecho\t");
+                     case 4: printf("Lateral derecho\t\t");
                              break;
-                     case 5: printf("Mediocentro\t");
+                     case 5: printf("Mediocentro\t\t");
                              break;
-                     case 6: printf("Segundo central\t");
+                     case 6: printf("Segundo central\t\t");
                              break;
                      case 7: printf("Carrilero izquierdo\t");
                              break;
@@ -957,12 +1001,12 @@ void show_dt_players(listateam list, players_of_team pt[], char c[], int cantida
                              break;
                      case 9: printf("Delantero centro\t");
                              break;
-                     case 10: printf("Enganche\t");
+                     case 10: printf("Enganche\t\t");
                               break;
                      case 11: printf("Segundo delantero\t");
                               break;
                   }
-                  printf("Dorsal %d\n", pt[i].p[j].number_shirt);
+                  printf("Dorsal %2d\n", pt[i].p[j].number_shirt);
                }
             }
          }
@@ -970,4 +1014,194 @@ void show_dt_players(listateam list, players_of_team pt[], char c[], int cantida
       }
    }
 }
+
+
+void load_games(listateam *list, team *t){
+
+   char c[MAX];
+   int j, aux, contador = 0, pj, pg, pe, etapa;
+
+   do{
+      printf("|-------------------------------------------------------|\n");
+      printf("| Por favor ingrese un pais que dispute el Mundial 2022 |\n");
+      printf("|-------------------------------------------------------|\n");
+      printf("|      Qatar, Ecuador, Senegal, Paises bajos            |\n");
+      printf("|      Inglaterra, Iran, Estados Unidos, Gales          |\n");
+      printf("|      Argentina, Arabia Saudita, Mexico, Polonia       |\n");
+      printf("|      Francia, Australia, Dinamarca, Tunez             |\n");
+      printf("|      España, Costa Rica, Alemania, Japon              |\n");
+      printf("|      Belgica, Canada, Marruecos, Croacia              |\n");
+      printf("|      Brasil, Serbia, Suiza, Camerun                   |\n");
+      printf("|      Portugal, Ghana, Uruguay, Corea del Sur          |\n");
+      printf("|-------------------------------------------------------|\n");
+      scanf(" %[^\n]", c);
+      for (j = 0; c[j]!= '\0'; j++){
+         c[j] = toupper(c[j]);
+      }
+      aux = control_country(c);
+   }while(aux != 0);
+
+   reset_lista(list);
+   while(!isOos_lista(*list)){
+      if(strcmp(c, mostrar_country(copy_lista(*list))) == 0){
+         etapa = mostrar_etapa(copy_lista(*list));
+         contador += 1;
+      }
+      forward_lista(list);
+   }
+
+   if(contador == 0){
+      printf("No hay datos cargados para el pais indicado\n");
+      printf("Vuelva al menu, cargue la informacion basica y luego regrese\n");
+   }
+   else{
+      switch(etapa){
+         case 1:  do{
+                     printf("Ingrese la cantidad de partidos jugados.\n");
+                     printf("Recuerde que la seleccion esta en Fase de Grupos\n");
+                     scanf("%d", &pj);
+                  }while(pj > 3 || pj < 0);
+                  do{
+                     printf("Ingrese la cantidad de partidos ganados\n");
+                     scanf("%d", &pg);
+                  }while(pg > pj || pg < 0);
+                  do{
+                     printf("Ingrese la cantidad de partidos empatados\n");
+                     scanf("%d", &pe);
+                  }while(pj < pg + pe || pe < 0);
+                  break;
+
+         case 2:  do{
+                     printf("Ingrese la cantidad de partidos jugados.\n");
+                     printf("Recuerde que la seleccion esta en Octavos de Final\n");
+                     scanf("%d", &pj);
+                  }while(pj > 4 || pj < 3);
+                  do{
+                     printf("Ingrese la cantidad de partidos ganados\n");
+                     scanf("%d", &pg);
+                  }while(pg > pj || pg < 0);
+                  do{
+                     printf("Ingrese la cantidad de partidos empatados\n");
+                     scanf("%d", &pe);
+                  }while(pj < pg + pe || pe < 0);
+                  break;
+
+         case 3:  do{
+                     printf("Ingrese la cantidad de partidos jugados.\n");
+                     printf("Recuerde que la seleccion esta en Cuartos de Final\n");
+                     scanf("%d", &pj);
+                  }while(pj > 5 || pj < 4);
+                  do{
+                     printf("Ingrese la cantidad de partidos ganados\n");
+                     scanf("%d", &pg);
+                  }while(pg > pj || pg < 0);
+                  do{
+                     printf("Ingrese la cantidad de partidos empatados\n");
+                     scanf("%d", &pe);
+                  }while(pj < pg + pe || pe < 0);
+                  break;
+
+         case 4:  do{
+                     printf("Ingrese la cantidad de partidos jugados.\n");
+                     printf("Recuerde que la seleccion esta en Semifinal\n");
+                     scanf("%d", &pj);
+                  }while(pj > 6 || pj < 5);
+                  do{
+                     printf("Ingrese la cantidad de partidos ganados\n");
+                     scanf("%d", &pg);
+                  }while(pg > pj || pg < 0);
+                  do{
+                     printf("Ingrese la cantidad de partidos empatados\n");
+                     scanf("%d", &pe);
+                  }while(pj < pg + pe || pe < 0);
+                  break;
+
+         case 5:  do{
+                     printf("Ingrese la cantidad de partidos jugados.\n");
+                     printf("Recuerde que la seleccion esta en Octavos\n");
+                     scanf("%d", &pj);
+                  }while(pj > 7 || pj < 6);
+                  do{
+                     printf("Ingrese la cantidad de partidos ganados\n");
+                     scanf("%d", &pg);
+                  }while(pg > pj || pg < 0);
+                  do{
+                     printf("Ingrese la cantidad de partidos empatados\n");
+                     scanf("%d", &pe);
+                  }while(pj < pg + pe || pe < 0);
+                  break;
+      }
+      reset_lista(list);
+      while(!isOos_lista(*list)){
+         if(strcmp(c, mostrar_country(copy_lista(*list))) == 0){
+            *t = copy_lista(*list);
+            suppress_lista_team(list);
+            carga_jugados(t, pj);
+            carga_empatados(t, pe);
+            carga_ganados(t, pg);
+            insert_lista_team(list, *t);
+         }
+         forward_lista(list);
+      }
+   }
+}
+
+
+void show_games(listateam list){
+
+   char c[MAX];
+   int aux, mj, mg, me, j, cont = 0;
+
+   do{
+      printf("|-------------------------------------------------------|\n");
+      printf("| Por favor ingrese un pais que dispute el Mundial 2022 |\n");
+      printf("|-------------------------------------------------------|\n");
+      printf("|      Qatar, Ecuador, Senegal, Paises bajos            |\n");
+      printf("|      Inglaterra, Iran, Estados Unidos, Gales          |\n");
+      printf("|      Argentina, Arabia Saudita, Mexico, Polonia       |\n");
+      printf("|      Francia, Australia, Dinamarca, Tunez             |\n");
+      printf("|      España, Costa Rica, Alemania, Japon              |\n");
+      printf("|      Belgica, Canada, Marruecos, Croacia              |\n");
+      printf("|      Brasil, Serbia, Suiza, Camerun                   |\n");
+      printf("|      Portugal, Ghana, Uruguay, Corea del Sur          |\n");
+      printf("|-------------------------------------------------------|\n");
+      scanf(" %[^\n]", c);
+      for (j = 0; c[j]!= '\0'; j++){
+         c[j] = toupper(c[j]);
+      }
+      aux = control_country(c);
+   }while(aux != 0);
+
+   reset_lista(&list);
+   while(!isOos_lista(list)){
+      if(strcmp(c, mostrar_country(copy_lista(list))) == 0){
+         cont += 1;
+      }
+      forward_lista(&list);
+   }
+
+   reset_lista(&list);
+   if(cont == 0){
+      printf("No hay coincidencias encontradas para la seleccion indicada\n");
+   }
+   else{
+      while(!isOos_lista(list)){
+         if(strcmp(c, mostrar_country(copy_lista(list))) == 0){
+             mj = mostrar_jugados(copy_lista(list)); 
+             printf("Partidos jugados %d\n", mj);
+             me = mostrar_empatados(copy_lista(list)); 
+             printf("Partidos empatados %d\n", me);
+             mg = mostrar_ganados(copy_lista(list));
+             printf("Partidos ganados %d\n", mg);
+             aux = mj - (mg + me);
+             printf("El equipo perdio %d partidos\n", aux);
+         }
+         forward_lista(&list);
+      }
+   }
+}
+
+
+
+
 
