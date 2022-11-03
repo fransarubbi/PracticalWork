@@ -204,8 +204,15 @@ int mostrar_points(team t){
     return t.points;
 }
 
-goalscorer mostrar_goalscorer(team t){
-    return t.player_goals;
+int mostrar_goals_goalscorer(team t){
+    return t.player_goals.goals;
+}
+
+char* mostrar_surname_goalscorer(team t){
+    char *aux;
+    aux = (char*)malloc(sizeof(char)*strlen(t.player_goals.surname));
+    strcpy(aux, t.player_goals.surname);
+    return aux;
 }
 
 
@@ -213,8 +220,16 @@ int mostrar_etapa(team t){
     return t.phase;   
 }
 
-date mostrar_fecha(team t){
-    return t.d;
+int mostrar_day_fecha(team t){
+    return t.d.day;
+}
+
+int mostrar_month_fecha(team t){
+    return t.d.month;
+}
+
+int mostrar_year_fecha(team t){
+    return t.d.year;
 }
 
 int mostrar_jugados(team t){
