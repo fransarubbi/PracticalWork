@@ -1,13 +1,9 @@
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include <malloc.h>
 #define MAX 50
 
-typedef struct{  // fecha
-    int day;
-    int month;
-    int year;
-} date;
 
 typedef struct{    // goleador
     char surname[MAX];
@@ -45,9 +41,9 @@ typedef struct{  //struct de equipo
     char group;
     int points;
     int phase;
+    char str_hour[100];
     goalscorer player_goals;
     statistics_phase sp;
-    date d;
     games g;
 } team;
 
@@ -71,9 +67,6 @@ void init_team(team *t){
     (*t).sp.statistics_final_gf = 0;
     (*t).sp.statistics_final_ge = 0;
     (*t).sp.statistics_final_p = 0;
-    (*t).d.day = 0;
-    (*t).d.month = 0;
-    (*t).d.year = 0;
     (*t).g.played = 0;
     (*t).g.win = 0;
     (*t).g.draw = 0;
@@ -81,6 +74,14 @@ void init_team(team *t){
 
 
 //Funciones de carga
+void carga_fecha(team *t){
+    time_t rawtime;
+    struct tm *info;
+    time(&rawtime);
+    info = localtime(&rawtime);
+    strcpy((*t).str_hour, asctime(info));
+}
+
 void carga_country(team *t, char c[]){
     strcpy((*t).country, c);
 }
@@ -110,28 +111,29 @@ void carga_phase(team *t, int f){
     (*t).phase = f;
 }
 
-void carga_statistics_group(team *t, int sgj, int sgg, int sge, int sej, int seg, int see, int srj, int srg, int sre, int ssj, int ssg, int sse, int sfj, int sfg, int sfe){
-    (*t).sp.statistics_group_gf = sgj;
-    (*t).sp.statistics_group_ge = sgg;
-    (*t).sp.statistics_group_p = sge;
-    (*t).sp.statistics_eights_gf = sej;
-    (*t).sp.statistics_eights_ge = seg;
-    (*t).sp.statistics_eights_p = see;
-    (*t).sp.statistics_rooms_gf = srj;
-    (*t).sp.statistics_rooms_ge = srg;
-    (*t).sp.statistics_rooms_p = sre;
-    (*t).sp.statistics_semifinal_gf = ssj;
-    (*t).sp.statistics_semifinal_ge = ssg;
-    (*t).sp.statistics_semifinal_p = sse;
-    (*t).sp.statistics_final_gf = sfj;
-    (*t).sp.statistics_final_ge = sfg;
-    (*t).sp.statistics_final_p = sfe; 
+void carga_phase_group(team *t, int gf, int ge){
+    (*t).sp.statistics_group_gf = gf;
+    (*t).sp.statistics_group_ge = ge;
 }
 
-void carga_fecha(team *t, int d, int m, int y){
-    (*t).d.day = d;
-    (*t).d.month = m;
-    (*t).d.year = y;
+void carga_eights(team *t, int gf, int ge){
+    (*t).sp.statistics_eights_gf = gf;
+    (*t).sp.statistics_eights_ge = ge;
+}
+
+void carga_rooms(team *t, int gf, int ge){
+    (*t).sp.statistics_rooms_gf = gf;
+    (*t).sp.statistics_rooms_ge = ge;
+}
+
+void carga_semifinal(team *t, int gf, int ge){
+    (*t).sp.statistics_semifinal_gf = gf;
+    (*t).sp.statistics_semifinal_ge = ge;
+}
+
+void carga_final(team *t, int gf, int ge){
+    (*t).sp.statistics_final_gf = gf;
+    (*t).sp.statistics_final_ge = ge;
 }
 
 void carga_jugados(team *t, int j){
@@ -146,6 +148,8 @@ void carga_empatados(team *t, int e){
     (*t).g.draw = e;
 }
 
+
+
 //Funciones modificar
 void modifica_points(team *t, int p){
     (*t).points = p;
@@ -156,6 +160,35 @@ void modifica_goalscorer(team *t, int goles, char apellido[]){
     strcpy((*t).player_goals.surname, apellido);
 }
 
+void modifica_group(team *t, int gf, int ge, int p){
+    (*t).sp.statistics_group_gf = gf;
+    (*t).sp.statistics_group_ge = ge;
+    (*t).sp.statistics_group_p = p;
+}
+
+void modifica_eights(team *t, int gf, int ge, int p){
+    (*t).sp.statistics_eights_gf = gf;
+    (*t).sp.statistics_eights_ge = ge;
+    (*t).sp.statistics_eights_p = p;
+}
+
+void modifica_rooms(team *t, int gf, int ge, int p){
+    (*t).sp.statistics_rooms_gf = gf;
+    (*t).sp.statistics_rooms_ge = ge;
+    (*t).sp.statistics_rooms_p = p;
+}
+
+void modifica_semifinal(team *t, int gf, int ge, int p){
+    (*t).sp.statistics_semifinal_gf = gf;
+    (*t).sp.statistics_semifinal_ge = ge;
+    (*t).sp.statistics_semifinal_p = p;
+}
+
+void modifica_final(team *t, int gf, int ge, int p){
+    (*t).sp.statistics_final_gf = gf;
+    (*t).sp.statistics_final_ge = ge;
+    (*t).sp.statistics_final_p = p;
+}
 
 void modifica_etapa(team *t, int ph){
     (*t).phase = ph;
@@ -174,7 +207,17 @@ void modifica_empatados(team *t, int e){
 }
 
 
+
+
 //Funciones de muestra
+char* mostrar_fecha(team t){
+    char *aux;
+    aux = (char*)malloc(sizeof(char)*strlen(t.str_hour));
+    strcpy(aux, t.str_hour);
+    return aux;
+}
+
+
 char* mostrar_country(team t){
     char *aux;
     aux = (char*)malloc(sizeof(char)*strlen(t.country));
@@ -220,18 +263,6 @@ int mostrar_etapa(team t){
     return t.phase;   
 }
 
-int mostrar_day_fecha(team t){
-    return t.d.day;
-}
-
-int mostrar_month_fecha(team t){
-    return t.d.month;
-}
-
-int mostrar_year_fecha(team t){
-    return t.d.year;
-}
-
 int mostrar_jugados(team t){
     return t.g.played;
 }
@@ -242,4 +273,8 @@ int mostrar_ganados(team t){
 
 int mostrar_empatados(team t){
     return t.g.draw;
+}
+
+statistics_phase mostrar_statistics_group(team t){
+    return t.sp;
 }
