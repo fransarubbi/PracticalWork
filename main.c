@@ -26,11 +26,11 @@ typedef struct{
 //Funciones del menu
 void load_list(listateam *, team *, int *, load_country [], int []); //carga n equipos en lista
 void show_all_list(listateam ); //muestra toda la lista
-void preload(listateam *, load_country [], int []); //precargar pais,dt,capitan,grupo,inicializar puntaje en 0
+void preload(listateam *, load_country [], int [], int *); //precargar pais,dt,capitan,grupo,inicializar puntaje en 0
 void show_for_country(listateam ); //busca un equipo por pais (usa search_for_country)
 void show_all_insame_phase(listateam );  //mostrar todos los de misma fase
 void show_team_inorder_points_recursion(listateam , int );  //funcion recursiva que muestra los equipos ordenados por puntaje
-void delete_team_for_country(listateam *, char [], load_country []);  //borra de la lista segun el pais y almacena sus datos en un archivo
+void delete_team_for_country(listateam *, char [], load_country [], int *);  //borra de la lista segun el pais y almacena sus datos en un archivo
 void load_players(players_of_team [], int *);      // carga plantel
 void show_dt_players(listateam , players_of_team [], char [], int );    // muestra dt y plantel
 void load_games(listateam *, team *);    // carga partidos jugados, ganados y empatados
@@ -71,8 +71,8 @@ int main(){
  players_of_team pt[32];
  load_country lc[32];
  char c[MAX];
- int opcion, cant = 0, aux = 0, j, cantidad = 0, total[1], enter;
- int i=0, cont = 0, datos_input = 0, otro_cant = 0, cant_games = 0;
+ int opcion, cant = 0, aux = 0, j, cantidad = 0, total[1], enter, k, control = 0;
+ int i = 0, cont = 0, datos_input = 0, otro_cant = 0, cant_games = 0, control_show = 0;
  total[0] = 0;
 
  init_lista_team(&list);
@@ -132,8 +132,13 @@ int main(){
    
    switch(opcion){
 
-      case 1: load_list(&list, &t, &cant, lc, total);
-              break;
+      case 1:  if(cant == 32){
+                  printf("No puede cargar mas equipos, se alcanzo el maximo\n");
+               }
+               else{
+                  load_list(&list, &t, &cant, lc, total);
+               }
+               break;
 
       case 2: if(cant == 0){
                   do{
@@ -234,7 +239,7 @@ int main(){
                      }
                      aux = control_country(c);
                   }while(aux != 0);
-                  delete_team_for_country(&list, c, lc);
+                  delete_team_for_country(&list, c, lc, &cant);
                }
                break;
 
@@ -261,8 +266,8 @@ int main(){
                }
                break;
 
-      case 11: preload(&list, lc, total);
-               cant += 1;
+      case 11: preload(&list, lc, total, &cant);
+               //cant += 1;
                break;
 
       case 12: if(cant_games == 0){
@@ -411,7 +416,7 @@ void load_aux_country(load_country lc[], char c[], int total[]){
 int function_control_country(load_country lc[], char c[], int total[]){
    int i, aux = 0;
    for(i = 0; i < total[0]; i++){
-      if(strcmp(lc[i].name, c) == 0 && lc[i].exists == 1){
+      if((strcmp(lc[i].name, c) == 0) && lc[i].exists == 1){
          aux = 1;
       }
    }
@@ -935,7 +940,7 @@ void search_for_country(listateam list, char c[]){
 
 void ordenate_recursive(listateam list, team auxiliar[], int i, int cont, int datos_input){
 
-   int j, change,points, change_phase, enter;
+   int j, k, change,points, change_phase, enter;
    char change_country[MAX], change_dt[MAX], change_captain[MAX];
 
    if(cont == 0){
@@ -946,31 +951,37 @@ void ordenate_recursive(listateam list, team auxiliar[], int i, int cont, int da
       auxiliar[i].points = mostrar_points(copy_lista(list));
       auxiliar[i].phase = mostrar_etapa(copy_lista(list));
    
-      for(j = 0; j < datos_input; j++){
-         if(auxiliar[j].points < auxiliar[j+1].points){
-            strcpy(change_country, auxiliar[j].country);
-            strcpy(auxiliar[j].country, auxiliar[j+1].country);
-            strcpy(auxiliar[j+1].country, change_country);
-
-            strcpy(change_dt, auxiliar[j].dt);
-            strcpy(auxiliar[j].dt, auxiliar[j+1].dt);
-            strcpy(auxiliar[j+1].dt, change_dt);
-
-            strcpy(change_captain, auxiliar[j].captain);
-            strcpy(auxiliar[j].captain, auxiliar[j+1].captain);
-            strcpy(auxiliar[j+1].captain, change_captain);
-
-            change = auxiliar[j].points;
-            auxiliar[j].points = auxiliar[j+1].points;
-            auxiliar[j+1].points = change;
-
-            change_phase = auxiliar[j].phase;
-            auxiliar[j].phase = auxiliar[j+1].phase;
-            auxiliar[j+1].phase = change_phase;
-         }
-      }
+      
    }
    else{
+
+      for(j = 0; j < datos_input + 1; j++){
+         for(k = 0; k < datos_input - 1; k++){
+            if(auxiliar[k].points < auxiliar[k+1].points){
+               strcpy(change_country, auxiliar[k].country);
+               strcpy(auxiliar[k].country, auxiliar[k+1].country);
+               strcpy(auxiliar[k+1].country, change_country);
+
+               strcpy(change_dt, auxiliar[k].dt);
+               strcpy(auxiliar[k].dt, auxiliar[k+1].dt);
+               strcpy(auxiliar[k+1].dt, change_dt);
+
+               strcpy(change_captain, auxiliar[k].captain);
+               strcpy(auxiliar[k].captain, auxiliar[k+1].captain);
+               strcpy(auxiliar[k+1].captain, change_captain);
+
+               change = auxiliar[k].points;
+               auxiliar[k].points = auxiliar[k+1].points;
+               auxiliar[k+1].points = change;
+
+               change_phase = auxiliar[k].phase;
+               auxiliar[k].phase = auxiliar[k+1].phase;
+               auxiliar[k+1].phase = change_phase;
+            }
+         }
+      }
+
+
       printf("----------- Imprimiendo paises ordenados por puntos ------------\n\n");
       for(j = 0; j < datos_input; j++){
          printf("\nPais: %s\n", auxiliar[j].country);
@@ -1655,7 +1666,7 @@ void change_points(listateam *list, team *t){
 }
 
 
-void delete_team_for_country(listateam *list, char c[], load_country lc[]){
+void delete_team_for_country(listateam *list, char c[], load_country lc[], int *cant){
 
    team t;
    int contador = 0, enter, i;
@@ -1707,6 +1718,7 @@ void delete_team_for_country(listateam *list, char c[], load_country lc[]){
       while(!isOos_lista(*list)){
          if(strcmp(c, mostrar_country(copy_lista(*list))) == 0){
             suppress_lista_team(list);
+            *cant -= 1;
             printf("Se ha borrado correctamente el pais\n");
          }
          else{
@@ -1869,10 +1881,10 @@ void change_phase(listateam *list, team *t){
 }
 
 
-void preload(listateam *list, load_country lc[], int total[]){
+void preload(listateam *list, load_country lc[], int total[], int *cant){
 
    char country[MAX], dt[MAX], captain[MAX], group;
-   int p, enter;
+   int p, enter, etapa;
    team t;
    init_team(&t);
 
@@ -1894,10 +1906,13 @@ void preload(listateam *list, load_country lc[], int total[]){
          carga_captain(&t, captain);
          fscanf(preLoad, "%c\n", &group);
          carga_group(&t, group);
+         etapa = 1;
+         carga_phase(&t, etapa);
          fscanf(preLoad, "%d\n", &p);
          carga_points(&t, p);
          carga_fecha(&t);
          insert_lista_team(list, t);
+         *cant += 1;
          load_aux_country(lc, country, total);
       }
       printf("Se ha realizado correctamente la carga de los datos\n");
@@ -1973,10 +1988,11 @@ void load_file_for_continet(listateam list){
 
    int aux, j, contador = 0, enter;
    int puntos_america = 0, puntos_europa = 0, puntos_africa = 0, puntos_asia = 0, puntos_oceania = 0;
-   char c[MAX];
+   char c[MAX], team[MAX];
 
    do{
       printf("Ingrese el continente que desea filtrar\n");
+      printf("Las opciones son: America, Europa, Africa, Asia y Oceania\n");
       scanf("%s", c);
       for (j = 0; c[j]!= '\0'; j++){
          c[j] = toupper(c[j]);
@@ -1988,43 +2004,54 @@ void load_file_for_continet(listateam list){
    while(!isOos_lista(list)){
 
       if(strcmp(c, "AMERICA") == 0){
-         aux = function_auxiliar_control_america(c);
+         strcpy(team, mostrar_country(copy_lista(list)));
+         aux = function_auxiliar_control_america(team);
          if(aux != 0){
             contador += 1;
          }
       }
       
       if(strcmp(c, "EUROPA") == 0){
-         aux = function_auxiliar_control_europa(c);
+         strcpy(team, mostrar_country(copy_lista(list)));
+         aux = function_auxiliar_control_america(team);
          if(aux != 0){
             contador += 1;
          }
       }
 
       if(strcmp(c, "AFRICA") == 0){
-         aux = function_auxiliar_control_africa(c);
+         strcpy(team, mostrar_country(copy_lista(list)));
+         aux = function_auxiliar_control_america(team);
          if(aux != 0){
             contador += 1;
          }
       }
 
       if(strcmp(c, "ASIA") == 0){
-         aux = function_auxiliar_control_asia(c);
+         strcpy(team, mostrar_country(copy_lista(list)));
+         aux = function_auxiliar_control_america(team);
          if(aux != 0){
             contador += 1;
          }
       }
 
       if(strcmp(c, "OCEANIA") == 0){
-         aux = function_auxiliar_control_oceania(c);
+         strcpy(team, mostrar_country(copy_lista(list)));
+         aux = function_auxiliar_control_america(team);
          if(aux != 0){
             contador += 1;
          }
       }
+
       forward_lista(&list);
    }
+
    if(contador == 0){
       printf("No hay selecciones cargadas pertenecientes al continente %s\n", c);
+      do{
+         printf("Ingrese 1 para continuar...\n");
+         scanf("%d", &enter);
+      }while(enter != 1);
    }
    else{
       statistics_phase sp_aux;
@@ -3872,11 +3899,11 @@ void load_file_for_continet(listateam list){
          }
          fclose(fp);
       }
+      do{
+         printf("Ingrese 1 para continuar...\n");
+         scanf("%d", &enter);
+      }while(enter != 1);
    }
-   do{
-      printf("Ingrese 1 para continuar...\n");
-      scanf("%d", &enter);
-   }while(enter != 1);
 }
 
 
@@ -4261,6 +4288,10 @@ void load_phase(listateam *list, team *t){
 
    if(contador == 0){
       printf("Aún no hay datos para el pais %s, registrelo y luego reintente\n", c);
+      do{
+         printf("Ingrese 1 para continuar...\n");
+         scanf("%d", &enter);
+      }while(enter != 1);
    }
    else{
       switch(etapa){
@@ -4350,11 +4381,11 @@ void load_phase(listateam *list, team *t){
          }
          forward_lista(list);
       }
+      do{
+         printf("Ingrese 1 para continuar...\n");
+         scanf("%d", &enter);
+      }while(enter != 1);
    }
-   do{
-      printf("Ingrese 1 para continuar...\n");
-      scanf("%d", &enter);
-   }while(enter != 1);
 }
 
 
